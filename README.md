@@ -16,7 +16,7 @@ Unlike other virtual scrolling solutions, TableVista:
 ## Status: 🚧 Active Development
 
 This library is currently in active development. Core functionality works,
-but API may change before v1.0. Contributions and feedback welcome!
+but API may change before v1.0. Contributions and feedback are welcome!
 
 **Roadmap to v1.0** (Target: ~31st Jan 2026)
 
