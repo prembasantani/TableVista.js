@@ -1,7 +1,8 @@
 class tf_clusterize {
-	constructor(containerId, all_tr_tags, options = {}) {
-		this.tableBodyId = containerId;
-		this.tableBody = document.getElementById(containerId);
+	constructor(container_id, all_tr_tags, options = {}) {
+		this.tableBodyId = container_id;
+
+		this.tableBody = document.getElementById(this.tableBodyId);
 		this.all_tr_tags = all_tr_tags;
 		this.totalRows = all_tr_tags.length;
 
