@@ -1,6 +1,6 @@
 # TableVista.js
 
-A performant virtual scrolling library for rendering massive tables with
+A lightweight & performant virtual scrolling library for rendering massive tables with
 thousands of rows without sacrificing performance or user experience.
 
 ## Why TableVista?
