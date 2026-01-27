@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<script
+			src="https://code.jquery.com/jquery-3.7.1.min.js"
+			integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+			crossorigin="anonymous"
+		></script>
+		<script src="./TableVista.js"></script>
+
+		<style>
+			#tableContainer table {
+				width: 100%;
+				border-collapse: collapse;
+			}
+
+			#tableContainer table tr:not(.tf_cluster_first_row, .tf_cluster_last_row) td {
+				border: 1px solid #ccc;
+				padding: 5px;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>TableVista</h1>
+
+		<h4>
+			This is just an example of how the data of any size can be freely scrolled inside your dom without the
+			hesitation of slow loading, without sacrificing performance or user experience.
+		</h4>
+
+		<p>Updates will be followed on my github profile.</p>
+		<p>Below is the container rendering <b>4000</b> rows in table format with initial view of <b>200</b> rows:</p>
+
+		<br />
+		<div id="tableContainer"></div>
+
+		<h3>Thank You!</h3>
+
+		<script>
+			const columns = [
+				{ id: "col1" },
+				{ id: "col2" },
+				{ id: "col3" },
+				{ id: "col4" },
+				{ id: "col5" },
+				{ id: "col6" },
+			];
+
+			let data = [];
+			for (let x = 0; x < 4000; x++) {
+				let obj = {};
+				for (let c = 0; c < columns.length; c++) {
+					obj[columns[c].id] = `Data row ${x} - col - ${columns[c].id}`;
+				}
+
+				data.push(obj);
+			}
+
+			const TableVista2 = new TableVista({
+				containerId: "tableContainer",
+				data: data,
+				visibleRows: 200,
+				columns: columns,
+			});
+		</script>
+	</body>
+</html>

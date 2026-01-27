@@ -1,10 +1,40 @@
-class tf_clusterize {
-	constructor(container_id, all_tr_tags, options = {}) {
-		this.tableBodyId = container_id;
+class TableVista {
+	constructor(options) {
+		// containerId, all_tr_tags,
+		this.instanceId = options.containerId || Math.floor(Math.random() * 1000000);
 
-		this.tableBody = document.getElementById(this.tableBodyId);
-		this.all_tr_tags = all_tr_tags;
-		this.totalRows = all_tr_tags.length;
+		if (!options.hasOwnProperty("containerId")) {
+			document.body.removeChild(document.getElementById(containerId));
+			const vistaNode = document.createElement("table");
+			this.containerId = `TableVista_${this.instanceId}`;
+			vistaNode.setAttribute("id", this.containerId);
+			vistaNode.setAttribute("cellpadding", 0);
+			vistaNode.setAttribute("cellspacing", 0);
+			document.body.appendChild(vistaNode);
+		} else {
+			this.containerId = options.containerId;
+		}
+
+		this.containerElement = document.getElementById(this.containerId);
+		console.log(this.containerElement);
+
+		if (this.containerElement.tagName != "table") {
+			const vistaNode = document.createElement("table");
+			vistaNode.setAttribute("cellpadding", 0);
+			vistaNode.setAttribute("cellspacing", 0);
+			this.containerId = `TableVista_${this.instanceId}`;
+			vistaNode.setAttribute("id", this.containerId);
+			this.containerElement.appendChild(vistaNode);
+		}
+
+		this.containerElement = document.getElementById(this.containerId);
+		console.log(this.containerElement);
+
+		this.data = options.data || [];
+		this.columns = options.columns || false;
+
+		// this.all_tr_tags = all_tr_tags;
+		this.totalRows = this.data.length;
 
 		if (this.totalRows == 0) {
 			this.destroy();
@@ -13,9 +43,10 @@ class tf_clusterize {
 
 		this.rowsInDom = [];
 		this.actual_row_index = [];
-		this.options = options;
+		// this.options = options;
 		this.offset_top = options.offset_top || 0;
 		this.visibleRows = options.visibleRows || 200;
+		this.visibleRows = this.visibleRows < 200 ? 200 : this.visibleRows;
 		this.bufferRows = options.bufferRows || 50;
 		this.onAfterRender = options.onAfterRender || false;
 		this.onBeforeRender = options.onBeforeRender || false;
@@ -28,19 +59,22 @@ class tf_clusterize {
 		this.block_rows_for_rendering = Math.floor((this.visibleRows * 70) / 100);
 		this.lastWindowScrollY = 0;
 		this.last_cluster_block = 0;
-		this.tbody_offset_top = $(this.tableBody).offset().top;
+		// console.log(this.containerElement);
+		this.tbody_offset_top = $(this.containerElement).offset().top;
 
 		this.first_row_height = 0;
 		this.last_row_height = 0;
 
 		this.debounced_scroll_handler = this.debounce(this.onScroll.bind(this), 20);
+
+		this.start();
 	}
 
 	start() {
-		this.uniqueEventNamespace = `tf_clusterize_${this.tableBodyId}_${Date.now()}`;
+		this.uniqueEventNamespace = `tf_clusterize_${this.instanceId}_${Date.now()}`;
 		$(document).on(`scroll.${this.uniqueEventNamespace}`, this.debounced_scroll_handler);
 
-		this.tableBody.innerHTML = "";
+		this.containerElement.innerHTML = "";
 
 		this.re_calculate_tbody_height = true;
 
@@ -50,11 +84,15 @@ class tf_clusterize {
 	}
 
 	append_cluster_rows() {
-		$(this.tableBody).find("tr.tf_cluster_last_row").remove();
-		$(this.tableBody).find("tr.tf_cluster_first_row").remove();
+		$(this.containerElement).find("tr.tf_cluster_last_row").remove();
+		$(this.containerElement).find("tr.tf_cluster_first_row").remove();
 
-		$(this.tableBody).prepend('<tr class="tf_cluster_first_row"><td class="" colspan="0" style="height: 0px;"></td></tr>');
-		$(this.tableBody).append('<tr class="tf_cluster_last_row"><td class="" colspan="0" style="height: 0px;"></td></tr>');
+		$(this.containerElement).prepend(
+			'<tr class="tf_cluster_first_row"><td class="" colspan="0" style="height: 0px;"></td></tr>',
+		);
+		$(this.containerElement).append(
+			'<tr class="tf_cluster_last_row"><td class="" colspan="0" style="height: 0px;"></td></tr>',
+		);
 	}
 
 	debounce(func, delay) {
@@ -69,20 +107,20 @@ class tf_clusterize {
 		$(document).off(`scroll.${this.uniqueEventNamespace}`, this.debounced_scroll_handler);
 		this.rowsInDom = [];
 		this.actual_row_index = [];
-		this.all_tr_tags = [];
+		// this.all_tr_tags = [];
 		this.last_cluster_block = 0;
 		this.debounced_scroll_handler = null;
 
-		$(this.tableBody).find("tr.tf_cluster_last_row").remove();
-		$(this.tableBody).find("tr.tf_cluster_first_row").remove();
+		$(this.containerElement).find("tr.tf_cluster_last_row").remove();
+		$(this.containerElement).find("tr.tf_cluster_first_row").remove();
 
 		this.first_row_height = 0;
 		this.last_row_height = 0;
 	}
 
-	update(all_tr_tags, options) {
-		this.all_tr_tags = all_tr_tags;
-		this.totalRows = all_tr_tags.length;
+	update(options) {
+		this.data = options.data || this.data;
+		this.totalRows = this.data.length;
 
 		let last_scrollTop = window.scrollY;
 		let last_scrollLeft = window.scrollX;
@@ -100,7 +138,7 @@ class tf_clusterize {
 
 		this.handle_options(options);
 
-		$(this.tableBody).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)").remove();
+		$(this.containerElement).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)").remove();
 
 		this.justRenderRows(0, this.visibleRows - 1, false);
 
@@ -109,7 +147,8 @@ class tf_clusterize {
 		this.updateSpacerRow();
 
 		if (tbody_scrollTop > start_scroll_limit) {
-			let current_tbody_scrollTop = Math.floor((this.tbody_height_approx / 100) * percentage) - this.tbody_offset_top + this.offset_top;
+			let current_tbody_scrollTop =
+				Math.floor((this.tbody_height_approx / 100) * percentage) - this.tbody_offset_top + this.offset_top;
 			window.scrollTo(last_scrollLeft, current_tbody_scrollTop);
 		} else {
 			window.scrollTo(last_scrollLeft, last_scrollTop);
@@ -117,7 +156,7 @@ class tf_clusterize {
 	}
 
 	calculate_visible_rows_height() {
-		let table_rows = $(this.tableBody).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)");
+		let table_rows = $(this.containerElement).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)");
 
 		if (table_rows.length == 0) {
 			return;
@@ -128,19 +167,19 @@ class tf_clusterize {
 		this.array_of_rowHeight = new Array(this.totalRows).fill(this.rowHeight);
 
 		let total_visible_row_height = 0;
-		let row_index = -1;
+		let rowIndex = -1;
 		let scrollHeight = 0;
 		table_rows.each(function (index, tr_element) {
 			scrollHeight = tr_element.scrollHeight;
-			row_index = current_instance.rowsInDom[index];
-			current_instance.array_of_rowHeight[row_index] = scrollHeight;
+			rowIndex = current_instance.rowsInDom[index];
+			current_instance.array_of_rowHeight[rowIndex] = scrollHeight;
 			total_visible_row_height += scrollHeight;
 		});
 		this.visible_rows_height_approx = total_visible_row_height;
 	}
 
 	calculate_tbody_height() {
-		let table_rows = $(this.tableBody).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)");
+		let table_rows = $(this.containerElement).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)");
 
 		if (table_rows.length == 0) {
 			return;
@@ -148,7 +187,8 @@ class tf_clusterize {
 
 		this.rowHeight = table_rows[0].scrollHeight;
 		this.calculate_visible_rows_height();
-		this.tbody_height_approx = this.visible_rows_height_approx + this.rowHeight * (this.totalRows - this.visibleRows);
+		this.tbody_height_approx =
+			this.visible_rows_height_approx + this.rowHeight * (this.totalRows - this.visibleRows);
 	}
 
 	re_calculate_cluster_settings(options) {
@@ -165,16 +205,13 @@ class tf_clusterize {
 	}
 
 	handle_options(options) {
-		this.tbody_offset_top = $(this.tableBody).offset().top;
-		if (typeof options != "undefined") {
-			if (options.hasOwnProperty("totalRows")) {
-				this.totalRows = options.totalRows;
-			}
-
-			if (options.hasOwnProperty("offset_top")) {
-				this.offset_top = options.offset_top;
-			}
-		}
+		this.tbody_offset_top = $(this.containerElement).offset().top;
+		this.offset_top = options.offset_top ?? options.offset_top;
+		// if (typeof options != "undefined") {
+		// 	if (options.hasOwnProperty("offset_top")) {
+		// 		this.offset_top = options.offset_top;
+		// 	}
+		// }
 	}
 
 	onScroll() {
@@ -193,11 +230,11 @@ class tf_clusterize {
 
 		let tbody_scrollTop = Math.floor(scrollTop - this.tbody_offset_top + this.offset_top);
 
-		let row_index = 0;
+		let rowIndex = 0;
 		let block_row_index = 0;
 		let top_tr_row_index = this.rowsInDom[0];
 		let cumulativeHeight = 0;
-		let total_rows_in_table = this.all_tr_tags.length;
+		let total_rows_in_table = this.data.length;
 		let end_index = total_rows_in_table - 1;
 
 		let first_visible_row_index = this.rowsInDom[0];
@@ -212,11 +249,11 @@ class tf_clusterize {
 				for (let x = first_visible_row_index; x < this.totalRows; x++) {
 					cumulativeHeight += this.array_of_rowHeight[x];
 					if (cumulativeHeight >= tbody_scrollTop) {
-						top_tr_row_index += row_index;
-						block_row_index = row_index;
+						top_tr_row_index += rowIndex;
+						block_row_index = rowIndex;
 						break;
 					}
-					row_index++;
+					rowIndex++;
 				}
 			}
 		} else {
@@ -233,11 +270,11 @@ class tf_clusterize {
 				for (let x = last_visible_row_index; x >= 0; x--) {
 					cumulativeHeight -= this.array_of_rowHeight[x];
 					if (cumulativeHeight <= tbody_scrollTop) {
-						last_row_index -= row_index;
-						block_row_index = row_index;
+						last_row_index -= rowIndex;
+						block_row_index = rowIndex;
 						break;
 					}
-					row_index++;
+					rowIndex++;
 				}
 
 				top_tr_row_index = last_row_index;
@@ -285,12 +322,37 @@ class tf_clusterize {
 		}
 	}
 
+	createTr(record) {
+		const tr = document.createElement("tr");
+
+		const columns = this.columns;
+
+		if (columns) {
+			for (let x = 0; x < columns.length; x++) {
+				const td = document.createElement("td");
+				td.innerHTML = record[columns[x].id];
+				tr.appendChild(td);
+			}
+		} else {
+			for (const tag in record) {
+				const td = document.createElement("td");
+				td.innerHTML = record[tag];
+
+				tr.appendChild(td);
+			}
+		}
+
+		return tr;
+	}
+
 	justRenderRows(start, end, prepend) {
-		let total_rows_in_table = this.all_tr_tags.length;
+		let total_rows_in_table = this.data.length;
 		start = Math.max(0, start);
 		end = Math.min(total_rows_in_table - 1, end);
 
-		let row;
+		console.log(`render rows - start [${start}] end [${end}] method - ${prepend}`);
+
+		// let row;
 		let row_count = 0;
 		this.actual_row_index = [];
 
@@ -301,20 +363,32 @@ class tf_clusterize {
 		if (prepend) {
 			for (let i = end; i >= start; i--) {
 				if (!this.rowsInDom.includes(i)) {
-					row = this.all_tr_tags[i];
-					$(row).insertAfter("#" + this.tableBodyId + " tr.tf_cluster_first_row");
+					const row = this.createTr(this.data[i]);
+					row.setAttribute("rowIndex", i);
+					const first_row = document
+						.getElementById(this.containerId)
+						.getElementsByClassName("tf_cluster_first_row");
+					first_row[0].after(row);
+					// first_row.prepend(row);
 					this.rowsInDom.push(i);
-					this.actual_row_index.push($(row).attr("row_index"));
+					this.actual_row_index.push(i);
 					row_count++;
 				}
 			}
 		} else {
 			for (let i = start; i <= end; i++) {
 				if (!this.rowsInDom.includes(i)) {
-					row = this.all_tr_tags[i];
-					$(row).insertBefore("#" + this.tableBodyId + " tr.tf_cluster_last_row");
+					const row = this.createTr(this.data[i]);
+					const last_row = document
+						.getElementById(this.containerId)
+						.getElementsByClassName("tf_cluster_last_row");
+					// console.log(last_row);
+					last_row[0].before(row);
+					// $(last_row[0]).prepend(row);
+					// last_row.appendChild(row);
+					// $(row).insertBefore("#" + this.containerId + " tr.tf_cluster_last_row");
 					this.rowsInDom.push(i);
-					this.actual_row_index.push($(row).attr("row_index"));
+					this.actual_row_index.push(i);
 					row_count++;
 				}
 			}
@@ -334,7 +408,7 @@ class tf_clusterize {
 	}
 
 	renderRows(start, end, prepend) {
-		let tbody_exists_in_dom = document.getElementById(this.tableBody.getAttribute("id"));
+		let tbody_exists_in_dom = this.containerElement;
 		if (tbody_exists_in_dom == null) {
 			// to check if the tbody exists in dom
 			this.destroy();
@@ -348,7 +422,7 @@ class tf_clusterize {
 
 	cleanupRows(end_index, remove_rows_from_top_or_bottom) {
 		let x = 0;
-		let table_rows = $(this.tableBody).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)");
+		let table_rows = $(this.containerElement).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)");
 
 		let last_row_index = this.rowsInDom.indexOf(end_index);
 
@@ -369,7 +443,7 @@ class tf_clusterize {
 	}
 
 	updateSpacerRow(recalculate) {
-		let table_rows = $(this.tableBody).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)");
+		let table_rows = $(this.containerElement).children("tr:not(.tf_cluster_first_row, .tf_cluster_last_row)");
 		if (table_rows.length == 0) {
 			this.first_row_height = 0;
 			this.last_row_height = 0;
@@ -386,7 +460,7 @@ class tf_clusterize {
 
 		let first_visible_row_index = this.rowsInDom[0];
 		let last_visible_row_index = this.rowsInDom[this.rowsInDom.length - 1];
-		let total_rows_in_table = this.all_tr_tags.length;
+		let total_rows_in_table = this.data.length;
 
 		if (first_visible_row_index == 0) {
 			// if first row is visible
@@ -403,7 +477,8 @@ class tf_clusterize {
 				height_of_rows_hidden_from_top += this.array_of_rowHeight[x];
 			}
 			this.calculate_visible_rows_height(); // recalculates the current visible row height "this.visible_rows_height_approx"
-			height_of_rows_hidden_from_bottom = this.tbody_height_approx - height_of_rows_hidden_from_top - this.visible_rows_height_approx;
+			height_of_rows_hidden_from_bottom =
+				this.tbody_height_approx - height_of_rows_hidden_from_top - this.visible_rows_height_approx;
 		}
 
 		this.first_row_height = height_of_rows_hidden_from_top;
@@ -411,11 +486,11 @@ class tf_clusterize {
 
 		let colspan = table_rows[0].children.length;
 
-		$(this.tableBody)
+		$(this.containerElement)
 			.find("tr.tf_cluster_last_row td")
 			.attr("colspan", colspan)
 			.css("height", height_of_rows_hidden_from_bottom + "px");
-		$(this.tableBody)
+		$(this.containerElement)
 			.find("tr.tf_cluster_first_row td")
 			.attr("colspan", colspan)
 			.css("height", height_of_rows_hidden_from_top + "px");
