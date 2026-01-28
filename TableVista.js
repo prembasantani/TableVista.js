@@ -16,7 +16,6 @@ class TableVista {
 		}
 
 		this.containerElement = document.getElementById(this.containerId);
-		console.log(this.containerElement);
 
 		if (this.containerElement.tagName != "table") {
 			const vistaNode = document.createElement("table");
@@ -28,7 +27,6 @@ class TableVista {
 		}
 
 		this.containerElement = document.getElementById(this.containerId);
-		console.log(this.containerElement);
 
 		this.data = options.data || [];
 		this.columns = options.columns || false;
@@ -59,7 +57,6 @@ class TableVista {
 		this.block_rows_for_rendering = Math.floor((this.visibleRows * 70) / 100);
 		this.lastWindowScrollY = 0;
 		this.last_cluster_block = 0;
-		// console.log(this.containerElement);
 		this.tbody_offset_top = $(this.containerElement).offset().top;
 
 		this.first_row_height = 0;
@@ -206,12 +203,7 @@ class TableVista {
 
 	handle_options(options) {
 		this.tbody_offset_top = $(this.containerElement).offset().top;
-		this.offset_top = options.offset_top ?? options.offset_top;
-		// if (typeof options != "undefined") {
-		// 	if (options.hasOwnProperty("offset_top")) {
-		// 		this.offset_top = options.offset_top;
-		// 	}
-		// }
+		this.offset_top = options.offset_top ? options.offset_top : this.offset_top;
 	}
 
 	onScroll() {
@@ -352,7 +344,6 @@ class TableVista {
 
 		console.log(`render rows - start [${start}] end [${end}] method - ${prepend}`);
 
-		// let row;
 		let row_count = 0;
 		this.actual_row_index = [];
 
@@ -382,11 +373,7 @@ class TableVista {
 					const last_row = document
 						.getElementById(this.containerId)
 						.getElementsByClassName("tf_cluster_last_row");
-					// console.log(last_row);
 					last_row[0].before(row);
-					// $(last_row[0]).prepend(row);
-					// last_row.appendChild(row);
-					// $(row).insertBefore("#" + this.containerId + " tr.tf_cluster_last_row");
 					this.rowsInDom.push(i);
 					this.actual_row_index.push(i);
 					row_count++;

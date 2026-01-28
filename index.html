@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Document</title>
+		<title>TableVista</title>
 		<script
 			src="https://code.jquery.com/jquery-3.7.1.min.js"
 			integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
@@ -12,34 +12,137 @@
 		<script src="./TableVista.js"></script>
 
 		<style>
+			body {
+				font-family: "Courier New", Courier, monospace;
+				font-size: 15px;
+				max-width: 85%;
+				margin: 0;
+				margin-left: auto;
+				margin-right: auto;
+				padding: 0;
+			}
+
+			p {
+				margin: 0 0 15px 0;
+			}
+
+			#leftContainer {
+				width: 65%;
+			}
+
+			#buttonManager {
+				width: 35%;
+				border: 1px solid #ccc;
+			}
+
+			#leftContainer,
+			#buttonManager {
+				padding: 20px;
+				min-height: 300px;
+			}
+
 			#tableContainer table {
 				width: 100%;
 				border-collapse: collapse;
+				table-layout: fixed;
 			}
 
 			#tableContainer table tr:not(.tf_cluster_first_row, .tf_cluster_last_row) td {
 				border: 1px solid #ccc;
 				padding: 5px;
+				min-width: 100px;
+				text-align: center;
+			}
+
+			.flex {
+				display: flex;
+				flex-direction: row;
+				width: 100%;
+			}
+			.flex.flex-item-center {
+				align-items: flex-start;
+			}
+			.flex > * {
+				margin: 0 20px;
+			}
+
+			#buttonManager ul {
+				margin: 0;
+				padding-left: 35px;
+			}
+
+			#buttonManager ul li {
+				margin-bottom: 10px;
+			}
+
+			#buttonManager button {
+				padding: 9px;
+				font-family: inherit;
+				background: #dddd51;
+				border-radius: 6px;
+				outline: none;
+				box-shadow: none;
+				border: 1px solid #c4c48f;
+			}
+
+			#buttonManager button:hover {
+				cursor: pointer;
 			}
 		</style>
 	</head>
 	<body>
-		<h1>TableVista</h1>
+		<h1>TableVista.js</h1>
 
-		<h4>
+		<h3>
+			A lightweight & performant virtual scrolling library for rendering massive tables with thousands of rows
+			without sacrificing performance or user experience.
+		</h3>
+
+		<p>
 			This is just an example of how the data of any size can be freely scrolled inside your dom without the
 			hesitation of slow loading, without sacrificing performance or user experience.
-		</h4>
+		</p>
 
-		<p>Updates will be followed on my github profile.</p>
 		<p>Below is the container rendering <b>4000</b> rows in table format with initial view of <b>200</b> rows:</p>
 
 		<br />
-		<div id="tableContainer"></div>
-
-		<h3>Thank You!</h3>
+		<div class="flex flex-item-center">
+			<div id="leftContainer">
+				<p>Visible Rows: <strong>200</strong></p>
+				<p>Buffer Rows: <strong>50</strong></p>
+				<div id="statusMessage"></div>
+				<br />
+				<div id="tableContainer"></div>
+			</div>
+			<div id="buttonManager">
+				<p><strong>Let the Magic happen!!</strong></p>
+				<ul>
+					<li>
+						<button class="button" id="initButton" onclick="initTableVista()">
+							Initialize TabelVista with 1000 Rows
+						</button>
+					</li>
+					<li>
+						<button class="button addMoreThRows">Add 1000 more Rows</button>
+					</li>
+					<li>
+						<button class="button addMoreThRows">Add 1000 more Rows</button>
+					</li>
+					<li>
+						<button class="button addMoreThRows">Add 1000 more Rows</button>
+					</li>
+				</ul>
+			</div>
+		</div>
 
 		<script>
+			document.querySelectorAll(".addMoreThRows").forEach((element) => {
+				element.addEventListener("click", function (event) {
+					addMoreThRows(event.target);
+				});
+			});
+
+			let data = [];
 			const columns = [
 				{ id: "col1" },
 				{ id: "col2" },
@@ -49,22 +152,62 @@
 				{ id: "col6" },
 			];
 
-			let data = [];
-			for (let x = 0; x < 4000; x++) {
-				let obj = {};
-				for (let c = 0; c < columns.length; c++) {
-					obj[columns[c].id] = `Data row ${x} - col - ${columns[c].id}`;
+			let tableVistaInstance = false;
+
+			function initTableVista() {
+				document.getElementById("initButton").setAttribute("disabled", true);
+				document.getElementById("initButton").disabled = true;
+
+				for (let x = 0; x < 1000; x++) {
+					let obj = {};
+					for (let c = 0; c < columns.length; c++) {
+						if (c == 0) {
+							obj[columns[c].id] = `Data row ${x} - ${columns[c].id}`;
+						} else {
+							obj[columns[c].id] = `${columns[c].id}`;
+						}
+					}
+
+					data.push(obj);
 				}
 
-				data.push(obj);
+				tableVistaInstance = new TableVista({
+					containerId: "tableContainer",
+					data: data,
+					visibleRows: 200,
+					columns: columns,
+				});
 			}
 
-			const TableVista2 = new TableVista({
-				containerId: "tableContainer",
-				data: data,
-				visibleRows: 200,
-				columns: columns,
-			});
+			function addMoreThRows(element) {
+				if (!tableVistaInstance) {
+					window.alert("TableVista is not initialized yet");
+					return;
+				}
+
+				const start = tableVistaInstance.data.length;
+				const end = start + 1000;
+
+				for (let x = start; x < end; x++) {
+					let obj = {};
+					for (let c = 0; c < columns.length; c++) {
+						if (c == 0) {
+							obj[columns[c].id] = `Data row ${x} - ${columns[c].id}`;
+						} else {
+							obj[columns[c].id] = `${columns[c].id}`;
+						}
+					}
+
+					data.push(obj);
+				}
+
+				tableVistaInstance.update({ data: data });
+
+				element.setAttribute("disabled", true);
+				element.disabled = true;
+				console.log(element);
+				console.log("add rows");
+			}
 		</script>
 	</body>
 </html>
